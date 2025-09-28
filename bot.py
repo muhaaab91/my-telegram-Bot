@@ -1,0 +1,33 @@
+import os
+import telebot
+import yt_dlp
+
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+bot = telebot.TeleBot(BOT_TOKEN)
+
+@bot.message_handler(commands=['start'])
+def send_welcome(message):
+    bot.reply_to(message, "أرسل لي رابط يوتيوب أو تيك توك وأنا أنزله لك 🎥")
+
+@bot.message_handler(func=lambda msg: True)
+def download_video(message):
+    url = message.text.strip()
+    bot.reply_to(message, "⏳ جاري التحميل...")
+
+    try:
+        ydl_opts = {
+            'outtmpl': 'video.mp4',
+            'format': 'mp4/best',
+        }
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            ydl.download([url])
+
+        with open("video.mp4", "rb") as f:
+            bot.send_video(message.chat.id, f)
+
+        os.remove("video.mp4")
+    except Exception as e:
+        bot.reply_to(message, f"❌ صار خطأ: {e}")
+
+print("🤖 البوت شغال...")
+bot.infinity_polling()
